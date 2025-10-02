@@ -1,0 +1,63 @@
+name: Builder Studio Executor
+
+on:
+  workflow_dispatch:
+    inputs:
+      action:
+        description: 'Action to perform (scaffold or build)'
+        required: true
+        type: choice
+        options:
+          - scaffold
+          - build
+
+jobs:
+  execute:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Scaffold React App
+        if: github.event.inputs.action == 'scaffold'
+        run: |
+          echo "🏗️ Scaffolding React application with degit..."
+          npx degit sveltejs/template scaffold-output
+          echo "✅ Scaffold complete! Files created in scaffold-output/"
+          ls -la scaffold-output/
+
+      - name: Install Dependencies
+        if: github.event.inputs.action == 'build'
+        run: |
+          echo "📦 Installing dependencies..."
+          npm ci
+
+      - name: Build Application
+        if: github.event.inputs.action == 'build'
+        run: |
+          echo "🔨 Building application..."
+          npm run build
+          echo "✅ Build complete!"
+
+      - name: Upload Build Artifacts
+        if: github.event.inputs.action == 'build'
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-output
+          path: .next/
+          retention-days: 7
+
+      - name: Summary
+        run: |
+          echo "### Execution Summary 🎉" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Action**: ${{ github.event.inputs.action }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status**: ✅ Success" >> $GITHUB_STEP_SUMMARY
+          echo "- **Timestamp**: $(date)" >> $GITHUB_STEP_SUMMARY
