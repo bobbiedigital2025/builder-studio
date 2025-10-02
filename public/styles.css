@@ -1,0 +1,20 @@
+
+:root { --bg:#0b0f1a; --panel:#0f1424; --text:#e6eaf2; --muted:#9aa8bf; --acc:#7c3aed; }
+*{box-sizing:border-box}
+html,body,#__next{height:100%}
+body{margin:0;background:var(--bg);color:var(--text);font-family:ui-sans-serif,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+.app{display:grid;grid-template-columns:320px 1fr;grid-template-rows:56px 1fr 220px;gap:12px;padding:12px;height:100%}
+.header{grid-column:1/-1;background:var(--panel);display:flex;align-items:center;justify-content:space-between;padding:0 16px;border-radius:12px}
+.sidebar{background:var(--panel);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px}
+.main{background:var(--panel);border-radius:12px;padding:0;display:grid;grid-template-columns:1fr 420px}
+.editor{border-right:1px solid #1b2340;overflow:hidden}
+.right{display:flex;flex-direction:column}
+.right > *{border-bottom:1px solid #1b2340}
+.right .chat{height:50%;overflow:auto;padding:12px}
+.right .logs{height:50%;overflow:auto;padding:12px;font-family:ui-monospace,Consolas,monospace;font-size:12px;white-space:pre-wrap}
+.footer{grid-column:1/-1;background:var(--panel);border-radius:12px;padding:8px;display:flex;gap:8px;align-items:center}
+input,button,select,textarea{background:#121833;color:var(--text);border:1px solid #1b2340;border-radius:8px;padding:8px}
+button.primary{background:var(--acc);border:none}
+.link{color:#a78bfa}
+.small{color:var(--muted);font-size:12px}
+.preview{padding:12px}
