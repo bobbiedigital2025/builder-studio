@@ -15,6 +15,7 @@ export default function Home() {
     "Click 'Build' to run the GitHub Actions workflow. Logs will appear below.",
   ]);
   const [input, setInput] = useState('');
+  const [busy, setBusy] = useState(false);
   const [content, setContent] = useState(`// Hello, Bobbie!\n// This is your app workspace. Save to /app/src/main.tsx etc.\n`);
   const [runId, setRunId] = useState<number | null>(null);
   const [logs, setLogs] = useState<string>('(no logs yet)');
@@ -36,6 +37,33 @@ export default function Home() {
   }, []);
 
   const pushChat = (line: string) => setChat((c) => [...c, line]);
+
+  async function askAI() {
+    if (!input.trim() || busy) return;
+    const q = input.trim();
+    setInput('');
+    pushChat(`You: ${q}`);
+    setBusy(true);
+    try {
+      const r = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: q }),
+      });
+      const data = (await r.json()) as { text?: string; error?: string };
+      if (data?.error) {
+        pushChat(`AI error: ${data.error}`);
+      } else if (data?.text) {
+        pushChat(`AI: ${data.text}`);
+      } else {
+        pushChat('AI: (no response)');
+      }
+    } catch (e: any) {
+      pushChat(`AI error: ${e?.message || e}`);
+    } finally {
+      setBusy(false);
+    }
+  }
 
   async function trigger(action: string, payload: any = {}) {
     pushChat(`> ${action}…`);
@@ -72,51 +100,51 @@ export default function Home() {
     <>
       <Head>
         <title>Builder Studio</title>
-        <link rel=\"stylesheet\" href=\"/styles.css\" />
+        <link rel="stylesheet" href="/styles.css" />
       </Head>
-      <div className=\"app\">
-        <div className=\"header\">
-          <div><strong>Builder Studio</strong> <span className=\"small\">— GitHub-powered dev agent</span></div>
-          <div className=\"small\">Repo: <code>{process.env.NEXT_PUBLIC_OWNER}/{process.env.NEXT_PUBLIC_REPO}</code></div>
+      <div className="app">
+        <div className="header">
+          <div><strong>Builder Studio</strong> <span className="small">— GitHub-powered dev agent</span></div>
+          <div className="small">Repo: <code>{process.env.NEXT_PUBLIC_OWNER}/{process.env.NEXT_PUBLIC_REPO}</code></div>
         </div>
 
-        <aside className=\"sidebar\">
+  <aside className="sidebar">
           <button onClick={scaffoldReact} className=\"primary\">Scaffold React</button>
           <button onClick={build}>Build</button>
           <button onClick={preview}>Preview</button>
-          <div className=\"small\">These trigger a GitHub Actions workflow in your repo.</div>
+          <div className="small">These trigger a GitHub Actions workflow in your repo.</div>
           <hr style={{borderColor:'#1b2340'}}/>
-          <div className=\"small\">Chat (stubbed):</div>
+          <div className="small">Chat:</div>
           <div style={{flex:1, overflow:'auto', border:'1px solid #1b2340', borderRadius:8, padding:8}}>
             {chat.map((line, i) => <div key={i}>{line}</div>)}
           </div>
           <div style={{display:'flex', gap:8, marginTop:8}}>
             <input value={input} onChange={e=>setInput(e.target.value)} placeholder=\"(stub) Ask agent…\" style={{flex:1}}/>
-            <button onClick={()=>{ if(input) { setChat(c=>[...c, input]); setInput(''); }}}>Send</button>
+            <button onClick={askAI} disabled={busy || !input.trim()}>{busy ? 'Sending…' : 'Send'}</button>
           </div>
-          <p className=\"small\">Hook this to your preferred LLM later.</p>
+          <p className="small">Powered by your configured LLM (see README).</p>
         </aside>
 
-        <main className=\"main\">
-          <div className=\"editor\">
+        <main className="main">
+          <div className="editor">
             <Monaco value={content} onChange={setContent}/>
           </div>
-          <div className=\"right\">
-            <div className=\"chat\">
+          <div className="right">
+            <div className="chat">
               <strong>Agent Feed</strong>
-              <p className=\"small\">This will mirror issue/PR comments from the agent bot.</p>
+              <p className="small">This will mirror issue/PR comments from the agent bot.</p>
               {chat.map((line, i) => <div key={i}>{line}</div>)}
             </div>
-            <div className=\"logs\">
+            <div className="logs">
               <strong>Runner Logs</strong>
-              <div className=\"small\">Polling latest workflow logs…</div>
+              <div className="small">Polling latest workflow logs…</div>
               <pre style={{whiteSpace:'pre-wrap'}}>{logs}</pre>
             </div>
           </div>
         </main>
 
-        <div className=\"footer\">
-          <div className=\"small\">Preview URL: {previewUrl ? <a className=\"link\" href={previewUrl} target=\"_blank\" rel=\"noreferrer\">{previewUrl}</a> : '— (enable Vercel PR previews)'}</div>
+        <div className="footer">
+          <div className="small">Preview URL: {previewUrl ? <a className="link" href={previewUrl} target="_blank" rel="noreferrer">{previewUrl}</a> : '— (enable Vercel PR previews)'}</div>
         </div>
       </div>
     </>

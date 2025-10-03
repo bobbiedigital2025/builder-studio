@@ -11,6 +11,15 @@
   - `GITHUB_OWNER`
   - `GITHUB_REPO`
   - `GITHUB_WORKFLOW` (default `exec.yml`)
+  - AI: `OPENAI_API_KEY` (and optional `AI_MODEL`, `OPENAI_API_URL`)
+
+### AI integration
+
+This repo now includes a simple AI chat endpoint at `pages/api/chat.ts` that talks to OpenAI's Chat Completions API by default.
+
+- Copy `.env.local.example` to `.env.local` and set `OPENAI_API_KEY`.
+- Optional: set `AI_MODEL` (default `gpt-4o-mini`) or point `OPENAI_API_URL` to an OpenAI-compatible server.
+- The sidebar Chat input will call `/api/chat` and display the model's response.
 
 ## Deployment
 
@@ -36,6 +45,17 @@ gcloud run deploy builder-studio \
   --platform managed \
   --allow-unauthenticated \
   --port 8080
+```
+
+To pass AI env vars to Cloud Run, include `--set-env-vars` on deploy:
+
+```bash
+gcloud run deploy builder-studio \
+  --image gcr.io/YOUR_PROJECT/builder-studio \
+  --platform managed \
+  --allow-unauthenticated \
+  --port 8080 \
+  --set-env-vars OPENAI_API_KEY=YOUR_KEY,AI_MODEL=gpt-4o-mini
 ```
 
 ## What it does
