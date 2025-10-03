@@ -6,12 +6,39 @@
 ## Setup
 
 - Deploy to Vercel, Cloud Run, or run locally.
+- Requirements:
+  - Node.js 18.17+ and npm 10+
+  - GitHub personal access token
+  - Optional: OpenAI-compatible API key for the built-in Chat endpoint
 - Set env vars:
-  - `GITHUB_TOKEN` (fine-grained PAT with repo + actions:read on your repo)
-  - `GITHUB_OWNER`
-  - `GITHUB_REPO`
+  - `GITHUB_TOKEN`
+    - Fine-grained PAT: enable “Actions: Read and write” and “Contents: Read and write” for this repo.
+    - Classic PAT: include `repo` and `workflow` scopes.
+  - `GITHUB_OWNER` (your GitHub username or org)
+  - `GITHUB_REPO` (this repo name, e.g. `builder-studio`)
   - `GITHUB_WORKFLOW` (default `exec.yml`)
-  - AI: `OPENAI_API_KEY` (and optional `AI_MODEL`, `OPENAI_API_URL`)
+  - AI: `OPENAI_API_KEY` (and optional `AI_MODEL`, `OPENAI_API_URL`, `AI_SYSTEM_PROMPT`)
+
+## Quickstart (local)
+
+1) Copy env example and edit values
+
+```bash
+cp .env.local.example .env.local
+# then edit .env.local (OPENAI_API_KEY, GITHUB_*, etc.)
+```
+
+2) Install and run dev server
+
+```bash
+npm ci
+npm run dev
+```
+
+3) Open http://localhost:3000
+
+- Sidebar buttons call `/api/dispatch` to trigger your GitHub Actions workflow.
+- “Chat” calls `/api/chat` which proxies to your configured OpenAI-compatible API.
 
 ### AI integration
 
@@ -21,7 +48,29 @@ This repo now includes a simple AI chat endpoint at `pages/api/chat.ts` that tal
 - Optional: set `AI_MODEL` (default `gpt-4o-mini`) or point `OPENAI_API_URL` to an OpenAI-compatible server.
 - The sidebar Chat input will call `/api/chat` and display the model's response.
 
+### Environment variables reference
+
+- Server-side (required for GitHub features):
+  - `GITHUB_TOKEN` – token with permissions to dispatch workflows and read logs
+  - `GITHUB_OWNER` – e.g. `your-username` or `your-org`
+  - `GITHUB_REPO` – e.g. `builder-studio`
+  - `GITHUB_WORKFLOW` – workflow filename (default `exec.yml`)
+- Server-side (AI):
+  - `OPENAI_API_KEY` – used by `/api/chat`
+  - `AI_MODEL` – default `gpt-4o-mini`
+  - `OPENAI_API_URL` – default `https://api.openai.com/v1/chat/completions`
+  - `AI_SYSTEM_PROMPT` – optional system prompt string
+- Client-side (display only):
+  - `NEXT_PUBLIC_OWNER` – shown in the UI header
+  - `NEXT_PUBLIC_REPO` – shown in the UI header
+
 ## Deployment
+
+### Vercel (recommended for previews)
+
+1) Import this repo into Vercel.
+2) In Project Settings → Environment Variables, add the server-side vars listed above. Do NOT add secrets as `NEXT_PUBLIC_*`.
+3) Deploy. Each PR will get a preview URL; you can surface and share those in the UI.
 
 ### Cloud Run
 
@@ -58,6 +107,19 @@ gcloud run deploy builder-studio \
   --set-env-vars OPENAI_API_KEY=YOUR_KEY,AI_MODEL=gpt-4o-mini
 ```
 
+### Docker (run locally)
+
+Build and run the container using the provided `Dockerfile`:
+
+```bash
+docker build -t builder-studio:local .
+docker run --rm -p 3000:3000 \
+  --env-file ./.env.local \
+  builder-studio:local
+```
+
+- The container runs `next start -p ${PORT:-3000}`; Cloud Run will set `PORT=8080`.
+
 ## What it does
 
 - **Scaffold React** → dispatches workflow with mode=scaffold; opens a PR.
@@ -70,5 +132,7 @@ gcloud run deploy builder-studio \
   - Real agent (connect OpenAI or a local LLM) to propose edits and commit via GitHub API.
   - Command palette for CI tasks, DB migrations, or env sync.
   - Databases: use Supabase; store keys as repo secrets or Vercel envs.
+- Do not expose server secrets with `NEXT_PUBLIC_*`.
+- Requires Node 18.17+ (Next.js 14.2.x).
 
 © 2025 Bobbie Digital
